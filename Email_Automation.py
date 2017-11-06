@@ -27,7 +27,7 @@ complete_destination = "C:\\Users\\X834995\\PycharmProjects\\OutlookScraping\\Cr
 directory = os.fsencode(destination)
 complete_directory = os.fsencode(complete_destination)
 
-N = 7  # Number of days to look back for email
+N = 22  # Number of days to look back for email
 date_N_days_ago = datetime.now() - timedelta(days=N)
 
 
@@ -187,6 +187,8 @@ for i in range(len(filenames)):
     with open(text_file_path, "w") as text_file:  # Opening file with same name, but .txt in write mode
         text_file.write(sql)  # Writing the final SQL query to the text file.
 
+    wb.close()
+
 # Moving all of the files into the completed files Folder
 
 complete_filenames = []
@@ -194,18 +196,27 @@ complete_filenames = []
 # Add everything in the directory to the complete list
 for file in os.listdir(directory):
     filename = os.fsdecode(file)
-    if filename == 'Completed Files':  # Skip the "Completed Files" folder
-        continue
+    #if filename.os.path.isdir():
+    #    continue
+    #if filename == 'Completed Files':  # Skip the "Completed Files" folder
+    #    continue
     full_path = os.path.join(destination, filename)
+    if os.path.isdir(full_path):
+        continue
     print(os.path.join(destination, filename))
     complete_filenames.append((filename, full_path))
 
+# Loop through files, create new path, and if the new path alraedy exists (meaning we already moved this file),
+# then delete the newly downloaded version (might need to change this if he uses same document)
 for file in complete_filenames:
     old_path = file[1]
     new_path = old_path.replace('C:\\Users\\X834995\\PycharmProjects\\OutlookScraping\\Craig Nangle Files\\',
                                 'C:\\Users\\X834995\\PycharmProjects\\OutlookScraping\\Craig Nangle Files\\Completed Files\\')
-    os.rename(old_path, new_path)
+    if os.path.isfile(new_path):
+        os.remove(old_path)
+    else:
+        os.rename(old_path, new_path)
 
 end = time.time()
-print(end - start)
+print("\n Time to completion (seconds): ", str(end - start))
 print("\nThe Script is complete!")
