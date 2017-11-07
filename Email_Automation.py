@@ -22,8 +22,8 @@ print('Starting the script...\n')
 
 outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
 
-destination = "C:\\Users\\X834995\\PycharmProjects\\OutlookScraping\\Craig Nangle Files"
-complete_destination = "C:\\Users\\X834995\\PycharmProjects\\OutlookScraping\\Craig Nangle Files\\Completed Files"
+destination = "X:\\Directory\\For Files\\To Be Saved"
+complete_destination = "X:\\Directory\\For Files\\To Be Saved\\Completed Files"
 directory = os.fsencode(destination)
 complete_directory = os.fsencode(complete_destination)
 
@@ -31,7 +31,7 @@ N = 22  # Number of days to look back for email
 date_N_days_ago = datetime.now() - timedelta(days=N)
 
 
-print("Searching outlook email for Craig's email with attachment...")
+print("Searching outlook email for Person's email with attachment...")
 print("After:", str(date_N_days_ago), "\n")
 
 
@@ -50,7 +50,7 @@ for m in messages:
     received_date = str(m.ReceivedTime)[0:16]  # get the date in which we received the email found above
     received_date = datetime.strptime(received_date, '%Y-%m-%d %H:%M')
     if received_date >= date_N_days_ago:  # Only doing below for the items N days ago
-        if re.search('NANGLE', sender) is not None:  # Need to upper and regex because internal emails look strange
+        if re.search('PERSON', sender) is not None:  # Need to upper and regex because internal emails look strange (internal emails with AD authentication aren't the email address, but the domain login names)
             print(received_date)
             print(sender, m.ReceivedTime, "\n")
             for a in m.Attachments:
@@ -94,9 +94,9 @@ for i in range(len(filenames)):
     colrange = ws[1]  # First row of the worksheet == columm headers
     print(filenames[i])
 
-    # Loop through the column headers to find "VIN", if not, it's just the first column
+    # Loop through the column headers to find "COLUMNNAME", if not, it's just the first column
     for j in range(len(colrange)):
-        if "VIN" in colrange[j].value.upper():
+        if "COLUMNNAME" in colrange[j].value.upper():
             # print(j)
             # print(colrange[j].value)
             vin_column = i + 1  # Have to add 1 because index starts at 0, but excel starts at 1
@@ -106,22 +106,22 @@ for i in range(len(filenames)):
             for k, row in enumerate(ws.iter_rows(min_row=2, min_col=vin_column, max_col=vin_column)):
                 for cell in row:
                     if k == 0:
-                        # print("SELECT '", str(cell.value), "' AS VIN_ID FROM DUAL", sep="")
-                        subsql = "SELECT '" + str(cell.value) + "' AS VIN_ID FROM DUAL"
+                        # print("SELECT '", str(cell.value), "' AS COLUMN_NAME FROM DUAL", sep="")
+                        subsql = "SELECT '" + str(cell.value) + "' AS COLUMN_NAME FROM DUAL"
                     else:
                         # print("UNION ALL SELECT '", str(cell.value), "' FROM DUAL", sep="")
                         subsql += "\nUNION ALL SELECT '" + str(cell.value) + "' FROM DUAL"
 
         else:
-            vin_column = 1  # Assuming first column is the VIN
+            vin_column = 1  # Assuming first column is the COLUMN NAME
 
             for k, row in enumerate(ws.iter_rows(min_row=1, min_col=vin_column, max_col=vin_column)):
                 for cell in row:
                     if k == 0:
-                        # print("SELECT '", str(cell.value), "' AS VIN_ID FROM DUAL", sep="")
-                        subsql = "SELECT '" + str(cell.value) + "' AS VIN_ID FROM DUAL"
+                        # print("SELECT '", str(cell.value), "' AS COLUMN_NAME FROM DUAL", sep="")
+                        subsql = "SELECT '" + str(cell.value) + "' AS COLUMN_NAME FROM DUAL"
 
-                    if str(cell.value) != 'None':  # If the cell value is not blank, add the VIN
+                    if str(cell.value) != 'None':  # If the cell value is not blank, add the COLUMN_NAME
                         # print("UNION ALL SELECT '", str(cell.value), "' FROM DUAL", sep="")
                         subsql += "\nUNION ALL SELECT '" + str(cell.value) + "' FROM DUAL"
 
@@ -183,11 +183,12 @@ for i in range(len(filenames)):
             """ + subsql + """ ) A
             ON DI.VIN_ID = A.VIN_ID"""
 
+    # Creating new text file with the new compelted sql query
     text_file_path = re.sub('.xlsx', '.txt', filenames[i])  # Substituting .txt for .xlsx to get unique text files
     with open(text_file_path, "w") as text_file:  # Opening file with same name, but .txt in write mode
         text_file.write(sql)  # Writing the final SQL query to the text file.
 
-    wb.close()
+    wb.close() # Closing excel workbook to prevent error (keeping it open causes issues when renaming/saving in new location)
 
 # Moving all of the files into the completed files Folder
 
@@ -201,7 +202,7 @@ for file in os.listdir(directory):
     #if filename == 'Completed Files':  # Skip the "Completed Files" folder
     #    continue
     full_path = os.path.join(destination, filename)
-    if os.path.isdir(full_path):
+    if os.path.isdir(full_path):  # Skip anythign that is a folder and not a file (better than specifying a folder name like comments above)
         continue
     print(os.path.join(destination, filename))
     complete_filenames.append((filename, full_path))
@@ -210,8 +211,8 @@ for file in os.listdir(directory):
 # then delete the newly downloaded version (might need to change this if he uses same document)
 for file in complete_filenames:
     old_path = file[1]
-    new_path = old_path.replace('C:\\Users\\X834995\\PycharmProjects\\OutlookScraping\\Craig Nangle Files\\',
-                                'C:\\Users\\X834995\\PycharmProjects\\OutlookScraping\\Craig Nangle Files\\Completed Files\\')
+    new_path = old_path.replace('X:\\Directory\\For Files\\To Be Saved\\,
+                                'X:\\Directory\\For Files\\To Be Saved\\Completed Files\\')
     if os.path.isfile(new_path):
         os.remove(old_path)
     else:
